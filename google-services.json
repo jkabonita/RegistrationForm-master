@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "707823387679",
+    "project_id": "itec222registrationform-dc3ad",
+    "storage_bucket": "itec222registrationform-dc3ad.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:707823387679:android:9a6d7c1cb5e3f95c61412a",
+        "android_client_info": {
+          "package_name": "com.janceeabonita012.ITEC222_RegistrationForm"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "707823387679-aqmiapi1fr897s2f7f5p7mhhtrpnddcm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.janceeabonita012.ITEC222_RegistrationForm",
+            "certificate_hash": "924701d046847c3c741c19cb17770b8d336ec4b8"
+          }
+        },
+        {
+          "client_id": "707823387679-qgqs13r544vqrc0ragv0be3jiee645no.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.janceeabonita012.ITEC222_RegistrationForm",
+            "certificate_hash": "80304fd9525481f608ed5408d66d322aef613123"
+          }
+        },
+        {
+          "client_id": "707823387679-0bdhfgc4ceroo7ukasho9ku22ecuk7fs.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAh9kZMIgSv93B8ON7QuPNJsbUXQai0Etw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "707823387679-0bdhfgc4ceroo7ukasho9ku22ecuk7fs.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

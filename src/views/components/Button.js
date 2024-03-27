@@ -14,9 +14,9 @@ const Button = ({ title, onPress = () => {} }) => {
 
 const styles = StyleSheet.create({
   button: {
-    height: 55,
+    height: 60,
     width: "100%",
-    backgroundColor: "blue",
+    backgroundColor: "darkblue",
     marginVertical: 10,
     justifyContent: "center",
     alignItems: "center",

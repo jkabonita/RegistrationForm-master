@@ -1,186 +1,201 @@
-import React from "react";
-import {
-  StyleSheet,
-  SafeAreaView,
-  View,
-  Text,
-  ScrollView,
-  Image,
-} from "react-native";
-
+import React, { useState, useEffect } from "react";
+import { StyleSheet, SafeAreaView, View, Text, ScrollView, Image, TouchableOpacity } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
-import {
-  ALERT_TYPE,
-  Dialog,
-  AlertNotificationRoot,
-  Toast,
-} from "react-native-alert-notification";
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import auth from '@react-native-firebase/auth';
 
 import Input from "../components/Input";
 import Button from "../components/Button";
 import Loader from "../components/Loader";
-import ccsLogo from "../../img/ccs.png";
+import robotlogo from "../../img/logo.png";
 
 const LoginScreen = ({ navigation }) => {
-  const [inputs, setInputs] = React.useState({
-    email: "",
-    password: "",
-  });
-  const [errors, setErrors] = React.useState({});
-  const [loading, setLoading] = React.useState(false);
+  const [initializing, setInitializing] = useState(true);
+  const [user, setUser] = useState(null);
+  const [inputs, setInputs] = useState({ email: "", password: "" });
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
-  const validate = async () => {
-    let isValid = true;
+  useEffect(() => {
+    const configureGoogleSignIn = async () => {
+      await GoogleSignin.configure({
+        webClientId: '707823387679-0bdhfgc4ceroo7ukasho9ku22ecuk7fs.apps.googleusercontent.com',
+        prompt: 'select_account',
+      });
+      setInitializing(false);
+    };
 
-    if (!inputs.email) {
-      handleError("Please Enter an Email Address", "email");
-      isValid = false;
-    } else if (!inputs.email.match(/\S+@\S+\.\S+/)) {
-      handleError("Please Enter a Valid Email Address", "email");
-      isValid = false;
+    configureGoogleSignIn();
+
+    const unsubscribe = navigation.addListener('focus', () => {
+      setUser(null);
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  const onGoogleButtonPress = async () => {
+    try {
+      await GoogleSignin.hasPlayServices();
+      const { idToken } = await GoogleSignin.signIn();
+      const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+      const { user } = await auth().signInWithCredential(googleCredential);
+      setUser(user);
+      SocialLoginSuccess(user);
+    } catch (error) {
+      console.log(error);
     }
-
-    if (!inputs.password) {
-      handleError("Please Enter a Password", "password");
-      isValid = false;
-    } else if (inputs.password.length < 8) {
-      handleError("Minimum Password Length is 8", "password");
-      isValid = false;
-    }
-
-    if (isValid) login();
   };
+
+  const SocialLoginSuccess = async (user) => {
+    navigation.navigate("HomeScreen");
+    await AsyncStorage.setItem("UserLoggedInData", JSON.stringify({ user, loggedIn: true }));
+  }
 
   const handleOnChange = (text, input) => {
-    setInputs((prevState) => ({ ...prevState, [input]: text }));
+    setInputs(prevState => ({ ...prevState, [input]: text }));
   };
+
   const handleError = (text, input) => {
-    setErrors((prevState) => ({ ...prevState, [input]: text }));
+    setErrors(prevState => ({ ...prevState, [input]: text }));
   };
 
-  const login = () => {
-    console.log("login!");
-    console.log(inputs);
+  const validate = () => {
+    if (!inputs.email) {
+      setErrors(prevState => ({ ...prevState, email: "Email is required" }));
+      return false;
+    }
+    if (!inputs.password) {
+      setErrors(prevState => ({ ...prevState, password: "Password is required" }));
+      return false;
+    }
+    return true;
+  };
 
-    setLoading(true);
-    setTimeout(async () => {
-      try {
-        setLoading(false);
-        let userData = await AsyncStorage.getItem("userData");
-        // console.log(userData);
-
-        if (userData) {
-          userData = JSON.parse(userData);
-          console.log("userData");
-          console.log(userData);
-
-          if (
-            inputs.email == userData.email &&
-            inputs.password == userData.password
-          ) {
-            navigation.navigate("HomeScreen");
-            AsyncStorage.setItem(
-              "userData",
-              JSON.stringify({ ...userData, loggedIn: true })
-            );
-          } else {
-            console.log("No Account Found");
-            Dialog.show({
-              type: ALERT_TYPE.DANGER,
-              title: "ERROR",
-              textBody: "Incorrect Username/Password!",
-              button: "Close",
-            });
-          }
-        } else {
-          console.log("No Account Found");
-          Dialog.show({
-            type: ALERT_TYPE.DANGER,
-            title: "ERROR",
-            textBody: "No Account Found!",
-            button: "Close",
-          });
-        }
-      } catch (error) {
-        console.log("Error! " + error);
-        Dialog.show({
-          type: ALERT_TYPE.DANGER,
-          title: "ERROR",
-          textBody: error,
-          button: "Close",
-        });
-      }
-    }, 3000);
+  const login = async () => {
+    if (validate()) {
+      setLoading(true);
+      setLoading(false);
+    }
   };
 
   return (
-    <AlertNotificationRoot style={styles.container}>
-      <SafeAreaView style={styles.container}>
-        <Loader visible={loading} />
-        <ScrollView style={styles.svContainer}>
-          <Image style={styles.image} source={ccsLogo} />
-          <Text style={styles.textTitle}>Registration Form</Text>
-          <View style={styles.viewContainer}>
-            <Input
-              label="Email Address"
-              iconName="envelope"
-              placeholder="Enter your Email Address"
-              onChangeText={(text) => handleOnChange(text, "email")}
-              onFocus={() => handleError(null, "email")}
-              error={errors.email}
-            />
-            <Input
-              label="Password"
-              iconName="key"
-              password
-              placeholder="Enter your Password"
-              onChangeText={(text) => handleOnChange(text, "password")}
-              onFocus={() => handleError(null, "password")}
-              error={errors.password}
-            />
-
-            <Button title="Login" onPress={validate} />
-            <Text
-              style={styles.textRegister}
-              onPress={() => navigation.navigate("RegistrationScreen")}
-            >
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollViewContainer}>
+        <Image style={styles.logo} source={robotlogo} />
+        <Text style={styles.title}>Robotics Club</Text>
+        <Text style={styles.title}> </Text>
+        <Text style={styles.title2}>Login</Text>
+        <View style={styles.formContainer}>
+          <Input
+            label="Email Address"
+            iconName="envelope"
+            placeholder="Enter your Email Address"
+            onChangeText={text => handleOnChange(text, "email")}
+            onFocus={() => handleError(null, "email")}
+            error={errors.email}
+          />
+          <Input
+            label="Password"
+            iconName="key"
+            password
+            placeholder="Enter your Password"
+            onChangeText={text => handleOnChange(text, "password")}
+            onFocus={() => handleError(null, "password")}
+            error={errors.password}
+          />
+          {!user ? (
+            <Button title="Login" onPress={login} />
+          ) : null}
+          {!user ? (
+            <TouchableOpacity style={styles.googleButton} onPress={onGoogleButtonPress}>
+              <View style={styles.googleButtonContent}>
+                <Image
+                  source={{uri: 'https://www.freepnglogos.com/uploads/google-logo-png/google-logo-png-suite-everything-you-need-know-about-google-newest-0.png'}}
+                  style={styles.googleLogo}
+                />
+                <Text style={styles.googleButtonText}>Sign in with Google</Text>
+              </View>
+            </TouchableOpacity>
+          ) : null}
+          {!user ? (
+            <Text style={styles.registerText} onPress={() => navigation.navigate("RegistrationScreen")}>
               Don't have an account? Register
             </Text>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    </AlertNotificationRoot>
+          ) : null}
+        </View>
+      </ScrollView>
+      <Loader visible={loading} />
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "white",
+    backgroundColor: "#ffffff",
   },
-  svContainer: {
-    paddingTop: 20,
+  scrollViewContainer: {
+    flexGrow: 1,
     paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 30,
   },
-  image: {
+  logo: {
     width: 250,
     height: 250,
     alignSelf: "center",
+    marginBottom: 10,
   },
-  textTitle: {
-    fontSize: 30,
+  title: {
+    fontSize: 25,
     fontWeight: "bold",
-    color: "black",
+    color: "darkblue",
+    textAlign: "center",
   },
-  viewContainer: {
-    paddingVertical: 20,
+  title2: {
+    fontSize: 23,
+    fontWeight: "bold",
+    color: "#333",
+    textAlign: "center",
   },
-  textRegister: {
+  formContainer: {
+    paddingHorizontal: 20,
+    marginTop: 20,
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  googleButton: {
+    height: 55,
+    width: "100%",
+    backgroundColor: "blue",
+    marginVertical: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 100,
+  },
+  googleButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  googleLogo: {
+    width: 24,
+    height: 24,
+    marginRight: 10,
+  },
+  googleButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  registerText: {
     textAlign: "center",
     fontSize: 16,
-    color: "black",
+    color: "#555",
     fontWeight: "bold",
+    marginTop: 20,
   },
 });
 

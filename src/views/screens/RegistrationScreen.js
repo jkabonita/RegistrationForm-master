@@ -1,26 +1,15 @@
+// RegistrationScreen.js
+
 import React from "react";
-import {
-  SafeAreaView,
-  StyleSheet,
-  View,
-  Text,
-  ScrollView,
-  Image,
-} from "react-native";
+import { SafeAreaView, StyleSheet, View, Text, ScrollView, Image, Button, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {
-  ALERT_TYPE,
-  Dialog,
-  AlertNotificationRoot,
-  Toast,
-} from "react-native-alert-notification";
-
+import { useNavigation } from '@react-navigation/native';
 import Input from "../components/Input";
-import Button from "../components/Button";
 import Loader from "../components/Loader";
-import ccsLogo from "../../img/ccs.png";
+import robotlogo from "../../img/logo.png";
 
-const RegistrationScreen = ({ navigation }) => {
+const RegistrationScreen = () => {
+  const navigation = useNavigation();
   const [inputs, setInputs] = React.useState({
     studno: "",
     email: "",
@@ -35,6 +24,7 @@ const RegistrationScreen = ({ navigation }) => {
   const validate = () => {
     let isValid = true;
 
+    // Validation logic
     if (!inputs.studno) {
       handleError("Please Enter a Student Number", "studno");
       isValid = false;
@@ -72,56 +62,45 @@ const RegistrationScreen = ({ navigation }) => {
     if (isValid) register();
   };
 
-  const register = () => {
-    console.log("register!");
-    console.log(inputs);
-
+  const register = async () => {
     setLoading(true);
-    setTimeout(() => {
-      try {
-        setLoading(false);
-        AsyncStorage.setItem("userData", JSON.stringify(inputs));
-
-        Dialog.show({
-          type: ALERT_TYPE.SUCCESS,
-          title: "Success",
-          textBody: "User Successfully Created!",
-          button: "Close",
-          onHide: () => {
-            navigation.navigate("LoginScreen");
+    try {
+      await AsyncStorage.setItem("userData", JSON.stringify(inputs));
+      setLoading(false);
+      Alert.alert(
+        "Success",
+        "User Successfully Created!",
+        [
+          {
+            text: "OK",
+            onPress: () => navigation.navigate("HomeScreen", { userData: inputs }),
           },
-        });
-      } catch (error) {
-        Dialog.show({
-          type: ALERT_TYPE.DANGER,
-          title: "ERROR",
-          textBody: error,
-          button: "Close",
-        });
-      }
-    }, 3000);
+        ],
+        { cancelable: false }
+      );
+    } catch (error) {
+      console.error(error);
+      handleError("An error occurred during registration", "registration");
+      setLoading(false);
+    }
   };
 
   const handleOnChange = (text, input) => {
-    setInputs((prevState) => ({ ...prevState, [input]: text }));
+    setInputs(prevState => ({ ...prevState, [input]: text }));
   };
+
   const handleError = (text, input) => {
-    setErrors((prevState) => ({ ...prevState, [input]: text }));
+    setErrors(prevState => ({ ...prevState, [input]: text }));
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <AlertNotificationRoot>
-        <Loader visible={loading} />
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <Image style={styles.image} source={ccsLogo} />
-          <Text style={styles.textTitle}>Registration Form</Text>
-          <Text style={styles.textSubTitle}>
-            Enter Your Details to Register
-          </Text>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <Image style={styles.image} source={robotlogo} />
+        <Text style={styles.textTitle}>Register</Text>
+        <View style={styles.formContainer}>
           <Input
             label="Student Number"
-            iconName="id-badge"
             placeholder="Enter your Student Number"
             onChangeText={(text) => handleOnChange(text, "studno")}
             onFocus={() => handleError(null, "studno")}
@@ -129,7 +108,6 @@ const RegistrationScreen = ({ navigation }) => {
           />
           <Input
             label="Full Name"
-            iconName="user"
             placeholder="Enter your Full Name"
             onChangeText={(text) => handleOnChange(text, "fullname")}
             onFocus={() => handleError(null, "fullname")}
@@ -137,7 +115,6 @@ const RegistrationScreen = ({ navigation }) => {
           />
           <Input
             label="Phone Number"
-            iconName="mobile-alt"
             placeholder="Enter your Phone Number"
             onChangeText={(text) => handleOnChange(text, "phone")}
             onFocus={() => handleError(null, "phone")}
@@ -145,7 +122,6 @@ const RegistrationScreen = ({ navigation }) => {
           />
           <Input
             label="Email Address"
-            iconName="envelope"
             placeholder="Enter your Email Address"
             onChangeText={(text) => handleOnChange(text, "email")}
             onFocus={() => handleError(null, "email")}
@@ -153,7 +129,6 @@ const RegistrationScreen = ({ navigation }) => {
           />
           <Input
             label="Password"
-            iconName="key"
             password
             placeholder="Enter your Password"
             onChangeText={(text) => handleOnChange(text, "password")}
@@ -162,17 +137,16 @@ const RegistrationScreen = ({ navigation }) => {
           />
           <Input
             label="Confirm Password"
-            iconName="key"
             password
             placeholder="Confirm your Password"
             onChangeText={(text) => handleOnChange(text, "passwordConfirm")}
             onFocus={() => handleError(null, "passwordConfirm")}
             error={errors.passwordConfirm}
           />
-
           <Button title="Register" onPress={validate} />
-        </ScrollView>
-      </AlertNotificationRoot>
+        </View>
+      </ScrollView>
+      <Loader visible={loading} />
     </SafeAreaView>
   );
 };
@@ -186,15 +160,15 @@ const styles = StyleSheet.create({
     paddingTop: 30,
     paddingHorizontal: 20,
   },
+  formContainer: {
+    paddingHorizontal: 20,
+  },
   textTitle: {
     fontSize: 30,
     fontWeight: "bold",
     color: "black",
-  },
-  textSubTitle: {
-    fontSize: 18,
-    color: "black",
-    marginVertical: 5,
+    alignSelf: "center",
+    marginBottom: 20,
   },
   image: {
     width: 250,

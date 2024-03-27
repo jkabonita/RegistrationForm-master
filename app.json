@@ -2,6 +2,7 @@
   "expo": {
     "name": "ITEC222_RegistrationForm",
     "slug": "ITEC222_RegistrationForm",
+    "plugins": ["@react-native-google-signin/google-signin"],
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -21,10 +22,17 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "googleServicesFile": "./google-services.json",
+      "package": "com.janceeabonita012.ITEC222_RegistrationForm"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "8b209f88-d94f-488e-ba65-c6fdd8d20991"
+      }
     }
   }
 }

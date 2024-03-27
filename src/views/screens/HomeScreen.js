@@ -1,48 +1,136 @@
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
-
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, Image, TouchableOpacity, ImageBackground } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
-import Button from "../components/Button";
-
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import auth from "@react-native-firebase/auth";
+import robot from '../../img/robot.png';
 const HomeScreen = ({ navigation }) => {
-  const [userDetails, setUserDetails] = React.useState();
-  React.useEffect(() => {
+  const [userDetails, setUserDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
     getUserData();
   }, []);
 
   const getUserData = async () => {
-    const userData = await AsyncStorage.getItem("userData");
+    try {
+      const userData = await AsyncStorage.getItem("userData");
+      const UserLoggedInData = await AsyncStorage.getItem("UserLoggedInData");
 
-    if (userData) {
-      console.log("Home Screen");
-      console.log(JSON.parse(userData));
-      setUserDetails(JSON.parse(userData));
+      if (userData) {
+        setUserDetails(JSON.parse(userData));
+      }
+
+      if (UserLoggedInData) {
+        const udata = JSON.parse(UserLoggedInData);
+        setUserDetails(udata.user);
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.error("Error getting user data:", error);
+      setLoading(false);
     }
   };
-  const logout = () => {
-    AsyncStorage.setItem(
-      "userData",
-      JSON.stringify({ ...userDetails, loggedIn: false })
-    );
 
-    navigation.navigate("LoginScreen");
+  const onSignOut = async () => {
+    try {
+      await GoogleSignin.revokeAccess();
+      await GoogleSignin.signOut();
+      await AsyncStorage.removeItem("UserLoggedInData");
+      setUserDetails(null);
+      navigation.navigate("LoginScreen");
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
   };
 
-  return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-      <Text style={styles.text}>Welcome {userDetails?.fullname} </Text>
+  if (loading) {
+    return <Text>Loading...</Text>;
+  }
 
-      <Button title="Logout" onPress={logout} />
+  return (
+    <View style={styles.container}>
+      {userDetails && userDetails.photoURL && (
+        <ImageBackground
+          style={styles.imageContainer}
+          source={{ uri: userDetails.photoURL }}
+        >
+          <Image style={styles.image} source={{ uri: userDetails.photoURL }} />
+          <Image
+    style={styles.robot}
+    source={robot} // Use the imported image as the source
+/>
+        </ImageBackground>
+      )}
+      <Text style={styles.greeting}>Welcome to Robotics Club!</Text>
+      {userDetails && (
+        <>
+          <Text style={styles.username}>
+            {userDetails.fullname || userDetails.displayName}
+          </Text>
+          <Text style={styles.email}>{userDetails.email}</Text>
+        </>
+      )}
+      <TouchableOpacity style={styles.signOutButton} onPress={onSignOut}>
+        <Text style={styles.buttonText}>Sign Out</Text>
+      </TouchableOpacity>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  text: {
-    textAlign: "center",
+  container: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#fff",
+  },
+  imageContainer: {
+    position: "relative",
+    width: 200,
+    height: 200,
+    marginBottom: 20,
+    overflow: "hidden",
+    borderRadius: 20,
+  },
+  image: {
+    width: "100%",
+    height: "100%",
+  },
+  robot: {
+    position: "absolute",
+    bottom: 5,
+    left: 5,
+    width: 50,
+    height: 58,
+  },
+  greeting: {
+    fontSize: 24,
+    color: "#333",
+    marginBottom: 10,
+  },
+  username: {
+    fontSize: 35,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 5,
+  },
+  email: {
+    fontSize: 18,
+    color: "#666",
+    marginBottom: 20,
+  },
+  signOutButton: {
+    backgroundColor: "darkblue",
+    paddingHorizontal: 22,
+    paddingVertical: 12,
+    borderRadius: 20,
+  },
+  buttonText: {
+    color: "#fff",
     fontSize: 20,
-    color: "black",
   },
 });
+
 export default HomeScreen;
